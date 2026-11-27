@@ -19,14 +19,15 @@
     "noUnusedParameters": true,
 
     "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
 
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "sourceMap": true,
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "declaration": true,
+    "emitDeclarationOnly": true
   },
   "include": ["src/**/*.ts"],
   "exclude": [
