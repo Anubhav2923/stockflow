@@ -51,14 +51,17 @@ function Login() {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   if (sessionStorage.getItem(authKey)) return <Navigate to="/" replace />;
-  async function login(e: FormEvent<HTMLFormElement>) {
+  function login(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    void signIn(Object.fromEntries(new FormData(e.currentTarget)));
+  }
+  async function signIn(credentials?: Record<string, FormDataEntryValue>) {
     setBusy(true);
     setError("");
     try {
       const result = await api.post(
-        "/auth/login",
-        Object.fromEntries(new FormData(e.currentTarget)),
+        credentials ? "/auth/login" : "/auth/credentials",
+        credentials,
       );
       sessionStorage.setItem(authKey, result.data.data.accessToken);
       navigate("/", { replace: true });
@@ -99,6 +102,9 @@ function Login() {
           <Button disabled={busy}>
             {busy ? "Signing in…" : "Sign in"}
             <ArrowRight size={16} />
+          </Button>
+          <Button type="button" variant="outline" disabled={busy} onClick={() => void signIn()}>
+            Log in with credentials
           </Button>
         </form>
       </div>

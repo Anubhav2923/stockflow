@@ -13,7 +13,7 @@ cp .env.example .env
 npm ci
 npm run db:deploy
 npm run db:generate
-npm run db:seed
+npx tsx src/scripts/create-admin.ts .env
 npm run dev
 ```
 
@@ -27,7 +27,7 @@ npm ci
 npm run dev
 ```
 
-Open the Vite address (normally http://localhost:5173). The fresh example seed account is **stockflow** with password **stockflow_local_demo**. An existing database retains its originally seeded password. Keep production credentials in the deployment environment.
+Open the Vite address (normally http://localhost:5173). Set ADMIN_PASSWORD in backend/.env before running the account creation command. Use **Log in with credentials** to enter the connected workspace as admin. Anyone who can open the login page can use this shared account when ADMIN_PASSWORD is configured. Keep production credentials in the deployment environment.
 
 ## Try the simulator
 
@@ -41,7 +41,7 @@ npm run build
 npm run simulate -- mixed 6
 ```
 
-The other modes are `purchase` and `sale`. Generated events use the seeded username's database ID. Keep the seed username configured when using the producer.
+The other modes are `purchase` and `sale`. The producer uses the admin account by default. Set `SEED_USERNAME` to select an existing simulation account explicitly.
 
 ## Architecture and FIFO
 
@@ -111,14 +111,14 @@ Use the repository-root `Dockerfile` and `render.yaml`. The Docker build copies 
 
 1. Prepare a Neon database and a managed Kafka cluster. Create the `inventory-events` topic and allow the Kafka user to produce, consume and join the `stockflow-inventory-v1` group.
 2. Push the deployment files to the connected repository's `develop` branch. In Render choose **New → Blueprint**, select the repository and apply the `stockflow` free web service. Use the repository root as the Docker context.
-3. Enter the pooled Neon URL in `DATABASE_URL`, the direct Neon URL in `DIRECT_URL`, and a private `SEED_PASSWORD` for the `stockflow` account. Enter the provider's `KAFKA_BROKERS`, `KAFKA_SASL_MECHANISM`, `KAFKA_USERNAME` and `KAFKA_PASSWORD`. The Blueprint generates the JWT secret. The local ignored `backend/.env.prod` is a worksheet for entering these settings.
-4. Deploy and open the URL Render assigns. The container applies migrations and runs the idempotent seed before starting Express. Render checks `/healthz` once the server is listening. Existing seed users retain their passwords.
+3. Enter the pooled Neon URL in `DATABASE_URL`, the direct Neon URL in `DIRECT_URL`, and `ADMIN_PASSWORD` for the existing admin account. Enter the provider's `KAFKA_BROKERS`, `KAFKA_SASL_MECHANISM`, `KAFKA_USERNAME` and `KAFKA_PASSWORD`. The Blueprint generates the JWT secret. The local ignored `backend/.env.prod` is a worksheet for entering these settings.
+4. Deploy and open the URL Render assigns. The container applies migrations before starting Express. Render checks `/healthz` once the server is listening.
 
 Render supplies the port and public origin. Refreshing a React route works at the same URL. Free instances sleep after 15 minutes without inbound traffic. The Kafka consumer pauses during sleep and resumes from its committed offsets when the service wakes. [Render Free service limits](https://render.com/docs/free)
 
 ## Independent deployments
 
-Build the backend with `npm ci && npm run build` and start it with `npm start`. Use a persistent Node host with WebSocket support and network access to Kafka. Run `npm run db:deploy` as the release command. On a fresh deployment, configure the predefined account and explicitly run `npm run db:seed`. The Prisma CLI, PostgreSQL adapter and client are pinned to 7.10.1. [Prisma 7 documentation](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7)
+Build the backend with `npm ci && npm run build` and start it with `npm start`. Use a persistent Node host with WebSocket support and network access to Kafka. Run `npm run db:deploy` as the release command. On a fresh database, provision the admin account explicitly with the account creation script. The Prisma CLI, PostgreSQL adapter and client are pinned to 7.10.1. [Prisma 7 documentation](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7)
 
 Use the pooled Neon connection for `DATABASE_URL` and the direct connection to the same Neon database for `DIRECT_URL`. Preserve the provider's TLS parameters. Set a private random `JWT_SECRET`, the frontend HTTPS origin in `CORS_ORIGIN`, and the host's assigned `PORT`. Use `TRUST_PROXY=1` only behind one trusted reverse proxy.
 

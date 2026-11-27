@@ -6,7 +6,7 @@ import type{LoginInput} from "./auth.types.ts"
 
 export const login: RequestHandler = async(req, res) : Promise<void> => {
     const result = await authService.login(
-        req.body as LoginInput
+        (res.locals.loginCredentials ?? req.body) as LoginInput
     );
 
     sendSuccess(res, {
