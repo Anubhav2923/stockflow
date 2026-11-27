@@ -1,0 +1,10 @@
+.git
+tmp
+.neon
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/*.log
+backend/src/generated
+**/tests

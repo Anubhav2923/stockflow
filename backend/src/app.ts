@@ -2,12 +2,15 @@ import express, { type Request, type Response } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import healthRoutes from "./routes/health.routes.js";
 
 // Single entry point for all module routes
 import routes from "./routes/index.js";
 
 // CORS - using process.env for origin (set in server.ts)
-const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
+export const corsOrigin = process.env.CORS_ORIGIN || process.env.RENDER_EXTERNAL_URL || "http://localhost:5173";
 
 const app = express();
 
@@ -17,7 +20,7 @@ if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
 app.use(express.json({ limit: "100kb" }));
 
 // CORS - simplified
-app.use(cors({ origin: CORS_ORIGIN }));
+app.use(cors({ origin: corsOrigin }));
 
 // Helmet security headers
 app.use(helmet());
@@ -30,7 +33,20 @@ const limiter = rateLimit({
 });
 
 // All API routes: /api/v1/health, /api/v1/auth/*, /api/v1/products/*
+app.use("/healthz", healthRoutes);
 app.use("/api", limiter, routes);
+app.use("/api", (_req, res) => {
+  res.status(404).json({ success: false, message: "API route not found" });
+});
+
+const publicDir = fileURLToPath(new URL("./public/", import.meta.url));
+if (existsSync(new URL("./public/index.html", import.meta.url))) {
+  app.use(express.static(publicDir));
+  app.get("/{*path}", (req, res, next) => {
+    if (!req.accepts("html") || req.path.includes(".") || req.path.startsWith("/assets/")) return next();
+    res.sendFile("index.html", { root: publicDir });
+  });
+}
 
 // Centralized error handler
 app.use(

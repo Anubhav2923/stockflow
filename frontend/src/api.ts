@@ -2,7 +2,8 @@ import axios from "axios";
 import { QueryClient, useQuery } from "@tanstack/react-query";
 
 export const origin =
-  import.meta.env.VITE_API_ORIGIN || "http://localhost:5000";
+  import.meta.env.VITE_API_ORIGIN ||
+  (import.meta.env.DEV ? "http://localhost:5000" : window.location.origin);
 export const api = axios.create({
   baseURL: origin + "/api/v1",
   timeout: 15000,

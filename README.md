@@ -88,6 +88,34 @@ The FIFO test creates and cleans up one fixture product in the configured databa
 
 From `frontend`, run `npm run typecheck` and `npm run build`. To include headless browser checks, install dependencies in both projects, set `TEST_BROWSER` to an installed Chromium or Edge executable, then rerun the backend integration suite. The browser test uses port 15173.
 
+## Deploy the combined app on Render Free
+
+### Neon database setup from the repository root
+
+The Neon configuration in `neon.ts` uses Postgres. In the linked checkout, `neon deploy` refreshes the ignored `.env.local`. The root start command loads Neon’s pooled `DATABASE_URL` for Prisma's PostgreSQL driver adapter. The root migration command uses `DATABASE_URL_UNPOOLED` for a direct connection.
+
+```sh
+npm ci
+npm --prefix backend ci
+npm --prefix frontend ci
+npm run db:deploy
+npm run build
+npm start
+```
+
+Set `JWT_SECRET` and the Kafka settings for the intended environment before starting. For a local run, the root start command reads `backend/.env` first and then the root environment files. Use a Kafka topic and group dedicated to the target database. On Render, enter the two Neon URLs as `DATABASE_URL` and `DIRECT_URL` respectively.
+
+### Render service setup
+
+Use the repository-root `Dockerfile` and `render.yaml`. The Docker build copies the Vite output into `backend/dist/public` inside the image. Express serves React routes, static assets, the API and Socket.IO on the same origin.
+
+1. Prepare a Neon database and a managed Kafka cluster. Create the `inventory-events` topic and allow the Kafka user to produce, consume and join the `stockflow-inventory-v1` group.
+2. Push the deployment files to the connected repository's `develop` branch. In Render choose **New → Blueprint**, select the repository and apply the `stockflow` free web service. Use the repository root as the Docker context.
+3. Enter the pooled Neon URL in `DATABASE_URL`, the direct Neon URL in `DIRECT_URL`, and a private `SEED_PASSWORD` for the `stockflow` account. Enter the provider's `KAFKA_BROKERS`, `KAFKA_SASL_MECHANISM`, `KAFKA_USERNAME` and `KAFKA_PASSWORD`. The Blueprint generates the JWT secret. The local ignored `backend/.env.prod` is a worksheet for entering these settings.
+4. Deploy and open the URL Render assigns. The container applies migrations and runs the idempotent seed before starting Express. Render checks `/healthz` once the server is listening. Existing seed users retain their passwords.
+
+Render supplies the port and public origin. Refreshing a React route works at the same URL. Free instances sleep after 15 minutes without inbound traffic. The Kafka consumer pauses during sleep and resumes from its committed offsets when the service wakes. [Render Free service limits](https://render.com/docs/free)
+
 ## Independent deployments
 
 Build the backend with `npm ci && npm run build` and start it with `npm start`. Use a persistent Node host with WebSocket support and network access to Kafka. Run `npm run db:deploy` as the release command. On a fresh deployment, configure the predefined account and explicitly run `npm run db:seed`. The Prisma CLI, PostgreSQL adapter and client are pinned to 7.10.1. [Prisma 7 documentation](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7)
