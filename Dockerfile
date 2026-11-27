@@ -15,7 +15,8 @@ COPY backend/prisma/ ./prisma/
 COPY backend/src/ ./src/
 RUN npm run build
 COPY --from=frontend /frontend/dist/ ./dist/public/
-ENV NODE_ENV=production PORT=10000
+COPY backend/aiven-ca.pem ./aiven-ca.pem
+ENV NODE_ENV=production PORT=10000 NODE_EXTRA_CA_CERTS=/app/backend/aiven-ca.pem
 USER node
 EXPOSE 10000
 CMD ["sh", "-c", "npm run db:deploy && npm run db:seed && exec node dist/server.js"]
