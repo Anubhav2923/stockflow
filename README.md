@@ -90,6 +90,23 @@ From `frontend`, run `npm run typecheck` and `npm run build`. To include headles
 
 ## Deploy the combined app on Render Free
 
+### Neon database setup from the repository root
+
+The Neon configuration in `neon.ts` uses Postgres. In the linked checkout, `neon deploy` refreshes the ignored `.env.local`. The root start command loads Neon’s pooled `DATABASE_URL` for Prisma's PostgreSQL driver adapter. The root migration command uses `DATABASE_URL_UNPOOLED` for a direct connection.
+
+```sh
+npm ci
+npm --prefix backend ci
+npm --prefix frontend ci
+npm run db:deploy
+npm run build
+npm start
+```
+
+Set `JWT_SECRET` and the Kafka settings for the intended environment before starting. For a local run, the root start command reads `backend/.env` first and then the root environment files. Use a Kafka topic and group dedicated to the target database. On Render, enter the two Neon URLs as `DATABASE_URL` and `DIRECT_URL` respectively.
+
+### Render service setup
+
 Use the repository-root `Dockerfile` and `render.yaml`. The Docker build copies the Vite output into `backend/dist/public` inside the image. Express serves React routes, static assets, the API and Socket.IO on the same origin.
 
 1. Prepare a Neon database and a managed Kafka cluster. Create the `inventory-events` topic and allow the Kafka user to produce, consume and join the `stockflow-inventory-v1` group.

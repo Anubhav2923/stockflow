@@ -1,0 +1,13 @@
+{
+  "name": "stockflow",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix frontend run build && npm --prefix backend run build && node -e \"require('node:fs').cpSync('frontend/dist', 'backend/dist/public', {recursive:true})\"",
+    "start": "node --env-file-if-exists=backend/.env --env-file-if-exists=.env --env-file-if-exists=.env.local backend/dist/server.js",
+    "db:deploy": "node --env-file-if-exists=.env --env-file-if-exists=.env.local backend/node_modules/prisma/build/index.js migrate deploy --config backend/prisma.config.ts"
+  },
+  "dependencies": {
+    "@neon/config": "^1.14.8",
+    "@neon/env": "^2.1.11"
+  }
+}
