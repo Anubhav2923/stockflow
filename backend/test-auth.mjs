@@ -1,11 +1,12 @@
-const BASE_URL = 'http://localhost:5000/api/v1';
+import "dotenv/config";
+const BASE_URL = 'http://localhost:5000/api/v1/auth';
 
 async function testAuth() {
   console.log('Testing auth endpoints...\n');
   
-  // Test health
+  // Test health (at root level)
   try {
-    const health = await fetch(`${BASE_URL}/health`);
+    const health = await fetch(`${BASE_URL}/../health`);
     const healthData = await health.json();
     console.log('✓ Health check:', JSON.stringify(healthData, null, 2));
   } catch (err) {
@@ -17,11 +18,11 @@ async function testAuth() {
     const loginResp = await fetch(`${BASE_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'admin', password: 'StockFlowLocal123!' })
+      body: JSON.stringify({ username: process.env.SEED_USERNAME, password: process.env.SEED_PASSWORD })
     });
     const text = await loginResp.text();
     console.log('✓ Login status:', loginResp.status);
-    console.log('✓ Login response:', text.substring(0, 600));
+    console.log("Login request completed");
     try {
       const loginData = JSON.parse(text);
       console.log('✓ Login parsed user:', loginData.user);

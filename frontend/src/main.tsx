@@ -1,0 +1,17 @@
+import { createRoot } from "react-dom/client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+import "./style.css";
+import { queries } from "./api";
+import { App } from "./shell";
+createRoot(document.getElementById("root")!).render(
+  <QueryClientProvider client={queries}>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </QueryClientProvider>,
+);

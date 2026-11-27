@@ -1,4 +1,5 @@
-const fetch = require('node-fetch');
+import "dotenv/config";
+
 
 const BASE_URL = 'http://localhost:5000/api/v1';
 
@@ -19,10 +20,10 @@ async function testAuth() {
     const loginResp = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: 'admin', password: 'StockFlowLocal123!' })
+      body: JSON.stringify({ username: process.env.SEED_USERNAME, password: process.env.SEED_PASSWORD })
     });
     const loginData = await loginResp.json();
-    console.log('✓ Login response:', JSON.stringify(loginData, null, 2));
+    console.log("Login request completed");
     
     if (loginData.accessToken) {
       const token = loginData.accessToken;

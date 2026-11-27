@@ -18,7 +18,8 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "simulate": "node dist/scripts/produce.js",
-    "test": "npm run build && node --test tests/fifo.test.mjs"
+    "test": "npm run build && node --test tests/fifo.test.mjs",
+    "test:integration": "npm run build && node tests/integration.mjs"
   },
   "keywords": [],
   "author": "",
@@ -51,5 +52,10 @@
     "pino-http": "^11.0.0",
     "socket.io": "^4.8.4",
     "zod": "^4.6.7"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "effect": "3.22.1"
+    }
   }
 }

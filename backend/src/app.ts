@@ -11,6 +11,8 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 
 const app = express();
 
+if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
+
 // Body parser with limit
 app.use(express.json({ limit: "100kb" }));
 
@@ -22,8 +24,8 @@ app.use(helmet());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 900000,
-  max: 300,
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 900000),
+  max: Number(process.env.RATE_LIMIT_MAX_REQUESTS || 900),
   message: { success: false, message: "Too many requests, please try again later." },
 });
 
@@ -38,7 +40,7 @@ app.use(
     console.error("Error:", err.message);
     res.status(statusCode).json({
       success: false,
-      message: err.message || "Internal Server Error",
+      message: statusCode >= 500 ? "Service temporarily unavailable" : err.message,
       error: { code, ...(err?.details ? { details: err.details } : {}) },
     });
   }
