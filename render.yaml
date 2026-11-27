@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: stockflow
+    runtime: docker
+    plan: free
+    branch: develop
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    envVars:
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SEED_USERNAME
+        value: stockflow
+      - key: SEED_PASSWORD
+        sync: false
+      - key: KAFKA_BROKERS
+        sync: false
+      - key: KAFKA_SSL
+        value: "true"
+      - key: KAFKA_CREATE_TOPIC
+        value: "false"
+      - key: KAFKA_SASL_MECHANISM
+        sync: false
+      - key: KAFKA_USERNAME
+        sync: false
+      - key: KAFKA_PASSWORD
+        sync: false
