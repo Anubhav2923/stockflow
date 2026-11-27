@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { readFileSync } from "node:fs";
 import kafkaJS, { type SASLOptions } from "kafkajs";
 const { Kafka, KafkaJSError, logLevel } = kafkaJS;
 import { prisma } from "../db/prisma.js";
@@ -27,7 +28,9 @@ const kafka = new Kafka({
   brokers: (process.env.KAFKA_BROKERS || "localhost:9092")
     .split(",")
     .map((s) => s.trim()),
-  ssl: process.env.KAFKA_SSL === "true" || !!sasl,
+  ssl: process.env.KAFKA_CA_FILE
+    ? { ca: readFileSync(process.env.KAFKA_CA_FILE, "utf8"), rejectUnauthorized: true }
+    : process.env.KAFKA_SSL === "true" || !!sasl,
   sasl,
   logLevel: logLevel.ERROR,
   retry: { retries: 8 },
