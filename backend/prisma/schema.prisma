@@ -1,0 +1,82 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  username     String @unique
+  passwordHash String
+  sales        Sale[]
+}
+
+model Product {
+  id               Int              @id @default(autoincrement())
+  sku              String           @unique
+  name             String
+  description      String?
+  category         String?
+  isActive         Boolean          @default(true)
+  remainingQuantity Int          @default(0)
+  batches          InventoryBatch[]
+  sales            Sale[]
+}
+
+model InventoryBatch {
+  id                Int              @id @default(autoincrement())
+  productId         Int
+  product           Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
+  receivedAt        DateTime         @default(now()) @db.Timestamptz(3)
+  receivedQuantity  Int
+  remainingQuantity Int
+  unitCost          Decimal          @db.Decimal(18, 4)
+  allocations       SaleAllocation[]
+
+  @@unique([id, productId])
+  @@index([productId, receivedAt, id])
+}
+
+model Sale {
+  id          Int              @id @default(autoincrement())
+  productId   Int
+  product     Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
+  userId      Int
+  user        User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  soldAt      DateTime         @default(now()) @db.Timestamptz(3)
+  quantity    Int
+  unitPrice   Decimal          @db.Decimal(18, 4)
+  allocations SaleAllocation[]
+
+  @@unique([id, productId])
+}
+
+model SaleAllocation {
+  saleId    Int
+  batchId   Int
+  productId Int
+  sale      Sale           @relation(fields: [saleId, productId], references: [id, productId], onDelete: Restrict, onUpdate: Restrict)
+  batch     InventoryBatch @relation(fields: [batchId, productId], references: [id, productId], onDelete: Restrict, onUpdate: Restrict)
+  quantity  Int
+  unitCost  Decimal        @db.Decimal(18, 4)
+
+  @@id([saleId, batchId])
+  @@index([batchId])
+}
+
+model ProcessedEvent {
+  eventId     String   @id
+  status      String   @default("PROCESSED")
+  eventType   String?
+  productId   Int?
+  eventTime   DateTime? @db.Timestamptz(3)
+  resultId    Int?
+  reason      String?
+  @@index([productId, status, eventTime])
+  processedAt DateTime @default(now()) @db.Timestamptz(3)
+}
