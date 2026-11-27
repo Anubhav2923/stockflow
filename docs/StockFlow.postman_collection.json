@@ -1,0 +1,277 @@
+{
+  "info": {
+    "name": "StockFlow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api/v1"
+    },
+    {
+      "key": "username",
+      "value": "stockflow"
+    },
+    {
+      "key": "password",
+      "value": "stockflow_local_demo"
+    },
+    {
+      "key": "productId",
+      "value": "1"
+    },
+    {
+      "key": "eventId",
+      "value": ""
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health",
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "auth": {
+          "type": "noauth"
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code < 300) pm.collectionVariables.set(\"token\", pm.response.json().data.accessToken);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Current user",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/auth/me"
+      }
+    },
+    {
+      "name": "Products",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/products"
+      }
+    },
+    {
+      "name": "Create product",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/products",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Shipping carton\",\n  \"sku\": \"CARTON-{{$timestamp}}\",\n  \"category\": \"Packaging\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code < 300) pm.collectionVariables.set(\"productId\", pm.response.json().data.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read product",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/products/{{productId}}"
+      }
+    },
+    {
+      "name": "Edit product",
+      "request": {
+        "method": "PATCH",
+        "url": "{{baseUrl}}/products/{{productId}}",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Shipping carton, large\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Archive product",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/products/{{productId}}"
+      }
+    },
+    {
+      "name": "Purchase",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/purchases",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 50,\n  \"unitPrice\": \"100.00\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code < 300) pm.collectionVariables.set(\"eventId\", pm.response.json().data.eventId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sale",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/sales",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 10,\n  \"unitPrice\": \"150.00\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code < 300) pm.collectionVariables.set(\"eventId\", pm.response.json().data.eventId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Simulate",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/simulate",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mode\": \"mixed\",\n  \"count\": 6\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code < 300) pm.collectionVariables.set(\"eventId\", pm.response.json().data[0].eventId);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Receipt",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/events/{{eventId}}"
+      }
+    },
+    {
+      "name": "Inventory",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/inventory"
+      }
+    },
+    {
+      "name": "Dashboard",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/dashboard"
+      }
+    },
+    {
+      "name": "Ledger",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/transactions"
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/logout"
+      }
+    }
+  ]
+}
