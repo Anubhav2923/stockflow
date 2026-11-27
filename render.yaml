@@ -18,9 +18,7 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: SEED_USERNAME
-        value: stockflow
-      - key: SEED_PASSWORD
+      - key: ADMIN_PASSWORD
         sync: false
       - key: KAFKA_BROKERS
         sync: false

@@ -8,7 +8,7 @@ import bcrypt from "bcryptjs";
  *   npx tsx src/scripts/create-admin.ts .env.prod
  *
  * Credentials come from ADMIN_USERNAME / ADMIN_PASSWORD if set,
- * otherwise default to admin / Admin@12345.
+ * with admin as the default username.
  */
 
 const envFile = process.argv[2] ?? ".env.prod";
@@ -20,7 +20,8 @@ if (!databaseUrl) {
 }
 
 const username = process.env.ADMIN_USERNAME ?? "admin";
-const password = process.env.ADMIN_PASSWORD ?? "Admin@12345";
+const password = process.env.ADMIN_PASSWORD;
+if (!password) throw new Error("Set ADMIN_PASSWORD before creating the account");
 
 // Dynamic import AFTER env is loaded, so ../db/prisma.ts sees the prod URL.
 const { prisma } = await import("../db/prisma.ts");

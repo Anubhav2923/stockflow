@@ -4,7 +4,7 @@ import { prisma } from "../db/prisma.js";
 
 try {
   const user = await prisma.user.findUniqueOrThrow({
-    where: { username: process.env.SEED_USERNAME || "stockflow" },
+    where: { username: process.env.SEED_USERNAME || process.env.ADMIN_USERNAME || "admin" },
   });
   const options = simulationSchema.parse({
     mode: process.argv[2] || "mixed",

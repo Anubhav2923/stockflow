@@ -29,6 +29,18 @@ const loginLimiter = rateLimit({
 });
 
 router.post(
+  "/credentials",
+  loginLimiter,
+  async (_req, res, next) => {
+    const password = process.env.ADMIN_PASSWORD;
+    if (!password) throw new ApiError("One-click login is not configured", 503, "LOGIN_UNAVAILABLE");
+    res.locals.loginCredentials = { username: process.env.ADMIN_USERNAME || "admin", password };
+    next();
+  },
+  authController.login
+);
+
+router.post(
   "/login",
   loginLimiter,
   validate(loginSchema),
