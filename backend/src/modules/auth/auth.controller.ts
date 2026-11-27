@@ -16,7 +16,7 @@ export const login: RequestHandler = async(req, res) : Promise<void> => {
 }
 
 export const getCurrentUser: RequestHandler = async( _req,res): Promise<void> => {
-    const userId = (_req as any).locals.userId as string;
+    const userId = res.locals.userId as string;
     const user = await authService.getCurrentUser(
         userId
     );

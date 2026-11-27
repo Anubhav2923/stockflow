@@ -16,7 +16,9 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "simulate": "node dist/scripts/produce.js",
+    "test": "npm run build && node --test tests/fifo.test.mjs"
   },
   "keywords": [],
   "author": "",
@@ -43,9 +45,11 @@
     "express-rate-limit": "^8.7.5",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
+    "kafkajs": "^2.2.4",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
+    "socket.io": "^4.8.4",
     "zod": "^4.6.7"
   }
 }

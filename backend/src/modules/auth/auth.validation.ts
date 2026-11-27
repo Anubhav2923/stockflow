@@ -9,11 +9,11 @@ export const loginSchema = z.object({
 
     password: z.string()
         .min(8, "Password must contain at least 8 characters")
-        .max(72)
-        .refine((value) => {
-            Buffer.byteLength(value, "utf8") <= 72,
+        .max(72, "Password exceeds the maximum allowed length")
+        .refine(
+            (value) => Buffer.byteLength(value, "utf8") <= 72,
             "Password exceeds the maximum allowed length"
-        }),
+        ),
 });
 
 

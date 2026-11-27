@@ -20,6 +20,7 @@ export const validate = (schema: z.ZodObject<any, any>) => {
       return;
     }
 
+    req.body = result.data;
     next();
   };
 };

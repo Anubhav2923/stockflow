@@ -17,11 +17,15 @@ model User {
 }
 
 model Product {
-  id      Int              @id @default(autoincrement())
-  sku     String           @unique
-  name    String
-  batches InventoryBatch[]
-  sales   Sale[]
+  id               Int              @id @default(autoincrement())
+  sku              String           @unique
+  name             String
+  description      String?
+  category         String?
+  isActive         Boolean          @default(true)
+  remainingQuantity Int          @default(0)
+  batches          InventoryBatch[]
+  sales            Sale[]
 }
 
 model InventoryBatch {
@@ -67,5 +71,12 @@ model SaleAllocation {
 
 model ProcessedEvent {
   eventId     String   @id
+  status      String   @default("PROCESSED")
+  eventType   String?
+  productId   Int?
+  eventTime   DateTime? @db.Timestamptz(3)
+  resultId    Int?
+  reason      String?
+  @@index([productId, status, eventTime])
   processedAt DateTime @default(now()) @db.Timestamptz(3)
 }

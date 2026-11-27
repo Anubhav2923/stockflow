@@ -3,11 +3,11 @@ import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 
-// Import auth routes
-import authRouter from "./modules/auth/auth.routes.js";
+// Single entry point for all module routes
+import routes from "./routes/index.js";
 
 // CORS - using process.env for origin (set in server.ts)
-const CORS_ORIGIN = "http://localhost:5173";
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 
 const app = express();
 
@@ -26,27 +26,20 @@ const limiter = rateLimit({
   max: 300,
   message: { success: false, message: "Too many requests, please try again later." },
 });
-app.use("/api/v1", limiter);
 
-// Health check endpoint
-app.get("/api/v1/health", (_req: Request, res: Response) => {
-  res.json({ success: true, message: "OK", data: { status: "healthy" } });
-});
-
-// Auth routes
-app.use("/api/v1/auth", authRouter);
-
-// API v1 routes
-app.use("/api/v1", rateLimit({ windowMs: 900000, max: 300 }));
+// All API routes: /api/v1/health, /api/v1/auth/*, /api/v1/products/*
+app.use("/api", limiter, routes);
 
 // Centralized error handler
 app.use(
   (err: any, _req: Request, res: Response, _next: any) => {
+    const statusCode = typeof err?.statusCode === "number" ? err.statusCode : 500;
+    const code = typeof err?.code === "string" ? err.code : "INTERNAL_SERVER_ERROR";
     console.error("Error:", err.message);
-    res.status(500).json({
+    res.status(statusCode).json({
       success: false,
       message: err.message || "Internal Server Error",
-      error: { code: "INTERNAL_SERVER_ERROR" },
+      error: { code, ...(err?.details ? { details: err.details } : {}) },
     });
   }
 );
