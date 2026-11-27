@@ -27,7 +27,7 @@
     "skipLibCheck": true,
     "noEmitOnError": true,
     "declaration": true,
-    "emitDeclarationOnly": true
+    "rewriteRelativeImportExtensions": true
   },
   "include": ["src/**/*.ts"],
   "exclude": [
