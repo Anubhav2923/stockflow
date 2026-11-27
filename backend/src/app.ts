@@ -3,6 +3,9 @@ import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 
+// Import auth routes
+import authRouter from "./modules/auth/auth.routes.js";
+
 // CORS - using process.env for origin (set in server.ts)
 const CORS_ORIGIN = "http://localhost:5173";
 
@@ -29,6 +32,9 @@ app.use("/api/v1", limiter);
 app.get("/api/v1/health", (_req: Request, res: Response) => {
   res.json({ success: true, message: "OK", data: { status: "healthy" } });
 });
+
+// Auth routes
+app.use("/api/v1/auth", authRouter);
 
 // API v1 routes
 app.use("/api/v1", rateLimit({ windowMs: 900000, max: 300 }));
