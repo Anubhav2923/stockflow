@@ -543,6 +543,23 @@ select {
 .form-card :is(.actions, form > .button, .button:last-child) {
   margin-top: 16px;
 }
+.demo-creds {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #6b7280;
+  dl {
+    margin: 0;
+  }
+  dt {
+    font-weight: 500;
+    width: 3.5rem;
+    display: inline-block;
+  }
+  dd {
+    margin-left: 4rem;
+    user-select: text;
+  }
+}
 .feature-icon {
   margin-bottom: 12px;
   background: #e9e7ff;
