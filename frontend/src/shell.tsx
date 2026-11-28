@@ -102,18 +102,16 @@ function Login() {
             {busy ? "Signing in…" : "Sign in"}
             <ArrowRight size={16} />
           </Button>
-          <div className="demo-creds">
-            <p>Demo credentials</p>
-            <dl>
-              <div>
-                <dt>Username</dt>
-                <dd>{demoUser}</dd>
-              </div>
-              <div>
-                <dt>Password</dt>
-                <dd>{demoPassword}</dd>
-              </div>
-            </dl>
+          <div className="credential-box">
+            <h3>Demo credentials</h3>
+            <div className="credential-row">
+              <span className="credential-label">Username</span>
+              <span className="credential-value">{demoUser}</span>
+            </div>
+            <div className="credential-row">
+              <span className="credential-label">Password</span>
+              <span className="credential-value">{demoPassword}</span>
+            </div>
           </div>
         </form>
       </div>

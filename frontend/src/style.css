@@ -560,6 +560,30 @@ select {
     user-select: text;
   }
 }
+.credential-box {
+  margin-top: 8px;
+  h3 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .credential-row {
+    margin-bottom: 6px;
+    display: flex;
+    gap: 8px;
+    span.credential-label {
+      font-weight: 500;
+      color: #475569;
+      flex: 0 0 4rem;
+    }
+    span.credential-value {
+      color: #6b7280;
+      user-select: text;
+      flex: 1;
+    }
+  }
+}
 .feature-icon {
   margin-bottom: 12px;
   background: #e9e7ff;
