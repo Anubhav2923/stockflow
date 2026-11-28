@@ -50,19 +50,18 @@ function Login() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const demoUser = "admin";
+  const demoPassword = "Admin@12345";
   if (sessionStorage.getItem(authKey)) return <Navigate to="/" replace />;
   function login(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     void signIn(Object.fromEntries(new FormData(e.currentTarget)));
   }
-  async function signIn(credentials?: Record<string, FormDataEntryValue>) {
+  async function signIn(credentials: Record<string, FormDataEntryValue>) {
     setBusy(true);
     setError("");
     try {
-      const result = await api.post(
-        credentials ? "/auth/login" : "/auth/credentials",
-        credentials,
-      );
+      const result = await api.post("/auth/login", credentials);
       sessionStorage.setItem(authKey, result.data.data.accessToken);
       navigate("/", { replace: true });
     } catch (e) {
@@ -103,9 +102,17 @@ function Login() {
             {busy ? "Signing in…" : "Sign in"}
             <ArrowRight size={16} />
           </Button>
-          <Button type="button" variant="outline" disabled={busy} onClick={() => void signIn()}>
-            Log in with credentials
-          </Button>
+          <div className="credential-box">
+            <h3>Demo credentials</h3>
+            <div className="credential-row">
+              <span className="credential-label">Username</span>
+              <span className="credential-value">{demoUser}</span>
+            </div>
+            <div className="credential-row">
+              <span className="credential-label">Password</span>
+              <span className="credential-value">{demoPassword}</span>
+            </div>
+          </div>
         </form>
       </div>
     </main>

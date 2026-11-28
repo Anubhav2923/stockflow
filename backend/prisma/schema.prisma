@@ -51,6 +51,7 @@ model Sale {
   soldAt      DateTime         @default(now()) @db.Timestamptz(3)
   quantity    Int
   unitPrice   Decimal          @db.Decimal(18, 4)
+  cogs        Decimal          @default(0) @db.Decimal(18, 4)
   allocations SaleAllocation[]
 
   @@unique([id, productId])

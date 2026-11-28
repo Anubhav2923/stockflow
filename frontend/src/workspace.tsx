@@ -5,6 +5,7 @@ import {
   Plus,
   Pencil,
   Archive,
+  Play,
   Send,
   ArrowRight,
   Search,
@@ -213,6 +214,7 @@ export function Simulator() {
   const products = useData<Product[]>("/products"),
     ledger = useData<Entry[]>("/transactions");
   const [kind, setKind] = useState("PURCHASE"),
+    [count, setCount] = useState(8),
     [busy, setBusy] = useState(false);
   const [sent, setSent] = useState<Receipt[]>(() => {
     try {
@@ -240,6 +242,18 @@ export function Simulator() {
       sessionStorage.setItem("stockflow.events", JSON.stringify(next));
       return next;
     });
+  }
+  async function simulate() {
+    setBusy(true);
+    try {
+      const result = await api.post("/simulate", { mode: "mixed", count });
+      remember(result.data.data);
+      toast("Simulation submitted to Kafka");
+    } catch (e) {
+      toast(message(e));
+    } finally {
+      setBusy(false);
+    }
   }
   async function manual(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -325,6 +339,36 @@ export function Simulator() {
             Submit event
           </Button>
         </form>
+      </Card>
+      <Card className="form-card sim-bulk">
+        <div>
+          <h2>Bulk simulation</h2>
+          <p>Publish 5–10 random purchases and sales for active products.</p>
+        </div>
+        <div className="sim-controls">
+          <label>
+            Events
+            <select
+              aria-label="Simulated events"
+              value={count}
+              onChange={(e) => setCount(+e.target.value)}
+            >
+              {[5, 6, 7, 8, 9, 10].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            variant="outline"
+            disabled={busy || !products.data?.length}
+            onClick={simulate}
+          >
+            <Play size={15} />
+            Run simulation
+          </Button>
+        </div>
       </Card>
       <Feedback
         loading={products.isLoading}

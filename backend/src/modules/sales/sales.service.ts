@@ -1,4 +1,4 @@
-import type { Prisma } from "../../generated/prisma/client.js";
+import { Prisma } from "../../generated/prisma/client.js";
 import type { InventoryEvent } from "../../kafka/event.validate.js";
 
 // Caller holds the product lock until all allocations and stock changes commit.
@@ -24,6 +24,7 @@ export async function allocateSale(
     },
   });
   let needed = event.quantity;
+  let cogs = new Prisma.Decimal(0);
   for (const batch of batches) {
     const quantity = Math.min(needed, batch.remainingQuantity);
     await tx.saleAllocation.create({
@@ -39,10 +40,12 @@ export async function allocateSale(
       where: { id: batch.id },
       data: { remainingQuantity: { decrement: quantity } },
     });
+    cogs = cogs.plus(batch.unitCost.times(quantity));
     needed -= quantity;
     if (!needed) break;
   }
   if (needed) throw new Error("Batch balances do not match product balance");
+  await tx.sale.update({ where: { id: sale.id }, data: { cogs } });
   await tx.product.update({
     where: { id: event.productId },
     data: { remainingQuantity: { decrement: event.quantity } },

@@ -31,7 +31,7 @@ Open the Vite address (normally http://localhost:5173). Set ADMIN_PASSWORD in ba
 
 ## Try the simulator
 
-Open **Event simulator** and submit a **FIFO transaction**: choose purchase or sale, a product, an integer quantity and a decimal purchase or selling price. The results table tracks each submitted event ID and shows the committed cost or rejection reason. A sale on empty stock produces a persisted rejection. Use **Transaction ledger** to expand FIFO costs and **Inventory** to inspect remaining batches.
+Open **Event simulator** and submit a **FIFO transaction**: choose purchase or sale, a product, an integer quantity and a decimal purchase or selling price. The **Bulk simulation** card below it publishes 5–10 random events for active products. The results table tracks each submitted event ID and shows the committed cost or rejection reason. A sale on empty stock produces a persisted rejection. Use **Transaction ledger** to expand FIFO costs and **Inventory** to inspect remaining batches.
 
 A separate producer is available while the backend consumer and topic are running.
 
@@ -74,6 +74,8 @@ All paths use `/api/v1`. Health and login are public. Supply `Authorization: Bea
 
 Manual event example: `{"productId":1,"quantity":50,"unitPrice":"100.00"}`. Optional fields are a UUID `eventId` and UTC ISO `timestamp`. Supply a stable event ID when retrying a submission. A queued or unconfirmed event has no confirmed financial effect. Socket clients authenticate with `auth.token` and listen for `inventory:updated`.
 
+Each sale persists its FIFO cost in `Sale.cogs`, the sum of the consumed batch quantities multiplied by their unit costs. The ledger returns that value per sale alongside its `SaleAllocation` rows, so both the sale total and the batch breakdown are available from the API.
+
 ## Verification
 
 Start Compose first. From `backend` run the following.
@@ -92,9 +94,15 @@ From `frontend`, run `npm run typecheck` and `npm run build`. To include headles
 
 StockFlow is deployed on **Render Free** with a **Neon PostgreSQL** database and **Aiven Kafka**.
 
-**Open the app:** [https://stockflow-1zit.onrender.com](https://stockflow-1zit.onrender.com)
+| | |
+| --- | --- |
+| **App and API** | [https://stockflow-1zit.onrender.com](https://stockflow-1zit.onrender.com) |
+| **API health** | [https://stockflow-1zit.onrender.com/healthz](https://stockflow-1zit.onrender.com/healthz) |
+| **API base** | `https://stockflow-1zit.onrender.com/api/v1` |
+| **Login** | Use **Log in with credentials** with the admin account for the deployment |
 
-Click **Log in with credentials** to enter the shared workspace.
+The React build is served by Express, so the frontend, API and Socket.IO share one origin. Click **Log in with credentials** to enter the shared workspace. Free instances sleep after 15 minutes without traffic, so the first request can take up to a minute while the service wakes.
+
 ### Create products
 
 1. Open **Products** in the sidebar.
@@ -124,6 +132,31 @@ Each submission is published to Kafka and applied by the consumer. The row appea
 3. A processed sale shows `FIFO cost ₹…`, the historical purchase cost of the units sold.
 
 Sales consume the oldest batch first. For example, buy 20 units at ₹120, then 20 units at ₹150, then sell 30 units at ₹200. The sale takes 20 units from the ₹120 batch and 10 from the ₹150 batch, so FIFO COGS is ₹3,900 against ₹6,000 of revenue, and 10 units worth ₹1,500 remain. A sale larger than the available stock is rejected with `Insufficient inventory` and changes nothing. A product that has been archived is rejected with `Unknown or inactive product`.
+
+### Run the bulk simulator
+
+Use the **Bulk simulation** card when you want a populated ledger quickly.
+
+1. Choose **5–10 events** in the **Events** selector.
+2. Click **Run simulation**.
+
+The backend publishes that many random purchases and sales for active products to `inventory-events`. Each one flows through Kafka like a manual submission and appears in **Processing results**, then in the ledger and inventory views. Sales are sized against current stock, so the simulation never leaves negative balances.
+
+### Publish events to Kafka
+
+External producers can publish to `inventory-events` with either the internal camelCase contract or the public snake_case contract from the brief:
+
+```json
+{
+  "product_id": "PRD001",
+  "event_type": "purchase",
+  "quantity": 50,
+  "unit_price": 100.0,
+  "timestamp": "2025-07-12T10:00:00Z"
+}
+```
+
+`product_id` accepts the numeric product ID or the product SKU. `event_type` is `purchase` or `sale` (case-insensitive). `unit_price` is required for purchases and optional for sales, where the cost comes from FIFO. A missing `timestamp` defaults to the consumption time, and a missing `eventId` is generated. Malformed events are recorded as `REJECTED` receipts with a reason; the consumer keeps running. Messages published with the internal contract (`productId`, `eventType`, `unitPrice`) work the same way.
 
 ### Inspect the results
 

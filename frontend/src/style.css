@@ -486,6 +486,30 @@ tr:last-child td {
   padding: 23px;
   margin-bottom: 18px;
 }
+.sim-bulk {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.sim-bulk > div:first-child {
+  flex: 1 1 320px;
+}
+.sim-bulk p {
+  font-size: 12px;
+}
+.sim-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.sim-controls label {
+  max-width: 110px;
+}
+.sim-controls select {
+  width: 100%;
+}
 .form-card form,
 .form-card > label,
 .form-grid {
@@ -518,6 +542,47 @@ select {
 }
 .form-card :is(.actions, form > .button, .button:last-child) {
   margin-top: 16px;
+}
+.demo-creds {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #6b7280;
+  dl {
+    margin: 0;
+  }
+  dt {
+    font-weight: 500;
+    width: 3.5rem;
+    display: inline-block;
+  }
+  dd {
+    margin-left: 4rem;
+    user-select: text;
+  }
+}
+.credential-box {
+  margin-top: 8px;
+  h3 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .credential-row {
+    margin-bottom: 6px;
+    display: flex;
+    gap: 8px;
+    span.credential-label {
+      font-weight: 500;
+      color: #475569;
+      flex: 0 0 4rem;
+    }
+    span.credential-value {
+      color: #6b7280;
+      user-select: text;
+      flex: 1;
+    }
+  }
 }
 .feature-icon {
   margin-bottom: 12px;
