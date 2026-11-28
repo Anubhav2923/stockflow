@@ -486,6 +486,30 @@ tr:last-child td {
   padding: 23px;
   margin-bottom: 18px;
 }
+.sim-bulk {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.sim-bulk > div:first-child {
+  flex: 1 1 320px;
+}
+.sim-bulk p {
+  font-size: 12px;
+}
+.sim-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.sim-controls label {
+  max-width: 110px;
+}
+.sim-controls select {
+  width: 100%;
+}
 .form-card form,
 .form-card > label,
 .form-grid {

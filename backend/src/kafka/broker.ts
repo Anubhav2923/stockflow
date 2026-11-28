@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import kafkaJS, { type SASLOptions } from "kafkajs";
 const { Kafka, KafkaJSError, logLevel } = kafkaJS;
 import { prisma } from "../db/prisma.js";
-import { eventSchema, type InventoryEvent } from "./event.validate.js";
+import type { InventoryEvent } from "./event.validate.js";
+import {
+  InvalidEventError,
+  normalizeInventoryEvent,
+} from "./event.normalize.js";
 import { processEvent } from "./process-event.js";
 
 export const topic = process.env.KAFKA_TOPIC || "inventory-events";
@@ -81,14 +85,23 @@ export async function startBroker(notify: (eventId: string) => void) {
       } catch {
         input = null;
       }
-      const parsed = eventSchema.safeParse(input);
+
+      // Accept both the internal camelCase contract and the public snake_case
+      // contract. Database failures during normalization propagate and leave
+      // the offset pending; only malformed events become REJECTED receipts.
+      let event: InventoryEvent | null = null;
+      let invalidReason = "Invalid payload";
+      try {
+        event = await normalizeInventoryEvent(input);
+      } catch (error) {
+        if (!(error instanceof InvalidEventError)) throw error;
+        invalidReason = error.message;
+      }
+
       let eventId: string;
       try {
-        if (
-          parsed.success &&
-          message.key?.toString() === String(parsed.data.productId)
-        ) {
-          const receipt = await processEvent(parsed.data);
+        if (event) {
+          const receipt = await processEvent(event);
           eventId = receipt.eventId;
         } else {
           eventId = `invalid:${stream}:${partition}:${message.offset}`;
@@ -98,7 +111,7 @@ export async function startBroker(notify: (eventId: string) => void) {
               {
                 eventId,
                 status: "REJECTED",
-                reason: "Invalid payload or product key",
+                reason: invalidReason,
               },
             ],
           });

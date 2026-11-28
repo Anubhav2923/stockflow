@@ -67,10 +67,7 @@ export async function ledger() {
       quantity: s.quantity,
       unitPrice: s.unitPrice,
       amount: s.unitPrice.times(s.quantity),
-      cogs: s.allocations.reduce(
-        (sum, a) => sum.plus(a.unitCost.times(a.quantity)),
-        new Prisma.Decimal(0),
-      ),
+      cogs: s.cogs,
       allocations: s.allocations,
     })),
   ].sort((a, b) => b.at.getTime() - a.at.getTime() || b.id - a.id);
