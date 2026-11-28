@@ -309,8 +309,7 @@ i,
   color: #a5620a;
   background: #fff2d9;
 }
-.chart-grid,
-.sim-grid {
+.chart-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
   gap: 18px;
@@ -492,14 +491,10 @@ tr:last-child td {
 .form-grid {
   margin-top: 16px;
 }
-.form-grid,
-.sim-grid {
+.form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-}
-.sim-grid .panel {
-  margin: 0;
 }
 .form-card label,
 .login-form label {
@@ -528,12 +523,6 @@ select {
   margin-bottom: 12px;
   background: #e9e7ff;
   color: #4f46e5;
-}
-.simulation {
-  background: linear-gradient(130deg, #f4f3ff, #fff 70%);
-}
-.simulation label {
-  max-width: 480px;
 }
 .toast {
   position: fixed;
@@ -676,7 +665,6 @@ select {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .chart-grid,
-  .sim-grid,
   .form-grid {
     grid-template-columns: 1fr;
   }

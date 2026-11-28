@@ -1,6 +1,6 @@
 # StockFlow
 
-StockFlow tracks purchases, sales and FIFO inventory costs. A React workspace lets you submit manual transactions, simulate activity, inspect batch balances and trace each sale to its original purchase costs.
+StockFlow tracks purchases, sales and FIFO inventory costs. A React workspace lets you submit transactions, inspect batch balances and trace each sale to its original purchase costs.
 
 ## Run locally
 
@@ -31,7 +31,7 @@ Open the Vite address (normally http://localhost:5173). Set ADMIN_PASSWORD in ba
 
 ## Try the simulator
 
-Open **Event simulator**, choose mixed, purchase-only or sale-only, select 5–10 events and run the simulation. The results table tracks each submitted event ID and shows the committed cost or rejection reason. Manual submissions accept a product, integer quantity and decimal unit price. A sale on empty stock produces a persisted rejection. Use **Transaction ledger** to expand FIFO costs and **Inventory** to inspect remaining batches.
+Open **Event simulator** and submit a **FIFO transaction**: choose purchase or sale, a product, an integer quantity and a decimal purchase or selling price. The results table tracks each submitted event ID and shows the committed cost or rejection reason. A sale on empty stock produces a persisted rejection. Use **Transaction ledger** to expand FIFO costs and **Inventory** to inspect remaining batches.
 
 A separate producer is available while the backend consumer and topic are running.
 
@@ -88,47 +88,45 @@ The FIFO test creates and cleans up one fixture product in the configured databa
 
 From `frontend`, run `npm run typecheck` and `npm run build`. To include headless browser checks, install dependencies in both projects, set `TEST_BROWSER` to an installed Chromium or Edge executable, then rerun the backend integration suite. The browser test uses port 15173.
 
-## Deploy the combined app on Render Free
+## Live demo
 
-### Neon database setup from the repository root
+StockFlow is deployed on **Render Free** with a **Neon PostgreSQL** database and **Aiven Kafka**.
 
-The Neon configuration in `neon.ts` uses Postgres. In the linked checkout, `neon deploy` refreshes the ignored `.env.local`. The root start command loads Neon’s pooled `DATABASE_URL` for Prisma's PostgreSQL driver adapter. The root migration command uses `DATABASE_URL_UNPOOLED` for a direct connection.
+**Open the app:** [https://stockflow-1zit.onrender.com](https://stockflow-1zit.onrender.com)
 
-```sh
-npm ci
-npm --prefix backend ci
-npm --prefix frontend ci
-npm run db:deploy
-npm run build
-npm start
-```
+Click **Log in with credentials** to enter the shared workspace.
+### Create products
 
-Set `JWT_SECRET` and the Kafka settings for the intended environment before starting. For a local run, the root start command reads `backend/.env` first and then the root environment files. Use a Kafka topic and group dedicated to the target database. On Render, enter the two Neon URLs as `DATABASE_URL` and `DIRECT_URL` respectively.
+1. Open **Products** in the sidebar.
+2. Click **Add product**.
+3. Enter the product details:
+   - **Product name** — 2–150 characters, for example `iPhone 15`.
+   - **SKU** — unique, up to 50 characters, for example `IPH-001`. It cannot be changed after saving.
+   - **Category** — 2–100 characters, for example `Electronics`.
+   - **Description** — optional, up to 500 characters.
+4. Click **Save product**.
 
-### Render service setup
+The product appears in **Active catalog** with **Stock 0**. Stock only changes through transactions, so create at least one product before using the simulator. **Archive** hides a product and blocks new events for it while keeping its transaction history.
 
-Use the repository-root `Dockerfile` and `render.yaml`. The Docker build copies the Vite output into `backend/dist/public` inside the image. Express serves React routes, static assets, the API and Socket.IO on the same origin.
+### Record a purchase
 
-1. Prepare a Neon database and a managed Kafka cluster. Create the `inventory-events` topic and allow the Kafka user to produce, consume and join the `stockflow-inventory-v1` group.
-2. Push the deployment files to the connected repository's `develop` branch. In Render choose **New → Blueprint**, select the repository and apply the `stockflow` free web service. Use the repository root as the Docker context.
-3. Enter the pooled Neon URL in `DATABASE_URL`, the direct Neon URL in `DIRECT_URL`, and `ADMIN_PASSWORD` for the existing admin account. Enter the provider's `KAFKA_BROKERS`, `KAFKA_SASL_MECHANISM`, `KAFKA_USERNAME` and `KAFKA_PASSWORD`. The Blueprint generates the JWT secret. The local ignored `backend/.env.prod` is a worksheet for entering these settings.
-4. Deploy and open the URL Render assigns. The container applies migrations before starting Express. Render checks `/healthz` once the server is listening.
+1. Open **Event simulator**.
+2. In the **FIFO transaction** card, set **Movement** to `Purchase`.
+3. Choose the product, enter an integer **Quantity**, and enter the **Purchase price (₹)** per unit, for example `120.00`.
+4. Click **Submit event**.
 
-Render supplies the port and public origin. Refreshing a React route works at the same URL. Free instances sleep after 15 minutes without inbound traffic. The Kafka consumer pauses during sleep and resumes from its committed offsets when the service wakes. [Render Free service limits](https://render.com/docs/free)
+Each submission is published to Kafka and applied by the consumer. The row appears in **Processing results** as `QUEUED` and turns `PROCESSED` within a few seconds with `Received ₹…`. A purchase creates a new inventory batch; buying the same product again at a different price creates a second batch with its own cost.
 
-## Independent deployments
+### Record a sale
 
-Build the backend with `npm ci && npm run build` and start it with `npm start`. Use a persistent Node host with WebSocket support and network access to Kafka. Run `npm run db:deploy` as the release command. On a fresh database, provision the admin account explicitly with the account creation script. The Prisma CLI, PostgreSQL adapter and client are pinned to 7.10.1. [Prisma 7 documentation](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7)
+1. Set **Movement** to `Sale`, choose the product, enter the **Quantity**, and enter the **Selling price (₹)** per unit.
+2. Click **Submit event**.
+3. A processed sale shows `FIFO cost ₹…`, the historical purchase cost of the units sold.
 
-Use the pooled Neon connection for `DATABASE_URL` and the direct connection to the same Neon database for `DIRECT_URL`. Preserve the provider's TLS parameters. Set a private random `JWT_SECRET`, the frontend HTTPS origin in `CORS_ORIGIN`, and the host's assigned `PORT`. Use `TRUST_PROXY=1` only behind one trusted reverse proxy.
+Sales consume the oldest batch first. For example, buy 20 units at ₹120, then 20 units at ₹150, then sell 30 units at ₹200. The sale takes 20 units from the ₹120 batch and 10 from the ₹150 batch, so FIFO COGS is ₹3,900 against ₹6,000 of revenue, and 10 units worth ₹1,500 remain. A sale larger than the available stock is rejected with `Insufficient inventory` and changes nothing. A product that has been archived is rejected with `Unknown or inactive product`.
 
-For managed Kafka set `KAFKA_BROKERS` to comma-separated addresses, `KAFKA_SSL=true`, and the provider's SASL mechanism, username and password. Supported SASL mechanisms are plain, scram-sha-256 and scram-sha-512. For a pre-created topic, set `KAFKA_CREATE_TOPIC=false` and grant producer, consumer and group access. Otherwise grant topic creation rights and set an appropriate replication factor. Local Compose uses one replica.
+### Inspect the results
 
-Build the frontend with `VITE_API_ORIGIN` set to the backend's HTTPS origin and run `npm ci && npm run build`. Serve `frontend/dist` from a static host with all client routes rewritten to index.html. Docker alternatives from the repository root:
-
-```sh
-docker build -t stockflow-api ./backend
-docker build --build-arg VITE_API_ORIGIN=https://your-api-host.example -t stockflow-web ./frontend
-```
-
-Supply backend environment variables at runtime. The frontend image serves the built files on port 80 with SPA routing. The API image includes Prisma migration tooling. For schema changes use `npm run db:migrate -- --name <change>` locally and commit the migration.
+- **Inventory** — expand a product to see each batch, its original and remaining units, and its unit cost.
+- **Transaction ledger** — every purchase and sale, newest first. Expand **FIFO COGS** on a sale to see which batches were consumed.
+- **Dashboard** — stock on hand, inventory value, lifetime purchase cost and FIFO COGS. It refreshes automatically through Socket.IO, or by polling when the socket is unavailable.

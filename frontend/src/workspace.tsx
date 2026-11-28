@@ -5,9 +5,7 @@ import {
   Plus,
   Pencil,
   Archive,
-  Play,
   Send,
-  FlaskConical,
   ArrowRight,
   Search,
   Package,
@@ -214,9 +212,7 @@ export function Products() {
 export function Simulator() {
   const products = useData<Product[]>("/products"),
     ledger = useData<Entry[]>("/transactions");
-  const [mode, setMode] = useState("mixed"),
-    [count, setCount] = useState(6),
-    [kind, setKind] = useState("PURCHASE"),
+  const [kind, setKind] = useState("PURCHASE"),
     [busy, setBusy] = useState(false);
   const [sent, setSent] = useState<Receipt[]>(() => {
     try {
@@ -244,18 +240,6 @@ export function Simulator() {
       sessionStorage.setItem("stockflow.events", JSON.stringify(next));
       return next;
     });
-  }
-  async function simulate() {
-    setBusy(true);
-    try {
-      const result = await api.post("/simulate", { mode, count });
-      remember(result.data.data);
-      toast("Simulation submitted to Kafka");
-    } catch (e) {
-      toast(message(e));
-    } finally {
-      setBusy(false);
-    }
   }
   async function manual(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -285,92 +269,63 @@ export function Simulator() {
     <>
       <Heading
         title="Event simulator"
-        summary="Publish inventory events and follow them from Kafka to the transaction ledger."
+        summary="Submit a purchase or sale and follow it from Kafka to the transaction ledger."
       />
-      <div className="sim-grid">
-        <Card className="form-card simulation">
-          <div className="feature-icon">
-            <FlaskConical size={23} />
+      <Card className="form-card">
+        <h2>FIFO transaction</h2>
+        <p>Submit one purchase or sale. Sales consume the oldest batch first.</p>
+        <form
+          onSubmit={manual}
+          onChange={() => setManualId(crypto.randomUUID())}
+        >
+          <div className="form-grid">
+            <label>
+              Movement
+              <select value={kind} onChange={(e) => setKind(e.target.value)}>
+                <option value="PURCHASE">Purchase</option>
+                <option value="SALE">Sale</option>
+              </select>
+            </label>
+            <label>
+              Product
+              <select name="product" required>
+                {products.data?.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Quantity
+              <input
+                name="quantity"
+                type="number"
+                min="1"
+                max="2147483647"
+                step="1"
+                defaultValue="1"
+                required
+              />
+            </label>
+            <label>
+              {kind === "SALE" ? "Selling price (₹)" : "Purchase price (₹)"}
+              <input
+                name="price"
+                type="text"
+                inputMode="decimal"
+                pattern="[0-9]{1,14}([.][0-9]{1,4})?"
+                placeholder={kind === "SALE" ? "200.00" : "100.00"}
+                required
+              />
+            </label>
           </div>
-          <h2>Automatic simulation</h2>
-          <p>Generate a batch of transactions for active products.</p>
-          <label>
-            Simulation mode
-            <select value={mode} onChange={(e) => setMode(e.target.value)}>
-              <option value="mixed">Mixed purchases and sales</option>
-              <option value="purchase">Purchases only</option>
-              <option value="sale">Sales only</option>
-            </select>
-          </label>
-          <label>
-            Events per run
-            <select value={count} onChange={(e) => setCount(+e.target.value)}>
-              {[5, 6, 7, 8, 9, 10].map((n) => (
-                <option key={n}>{n}</option>
-              ))}
-            </select>
-          </label>
-          <Button disabled={busy || !products.data?.length} onClick={simulate}>
-            <Play size={15} />
-            Run simulation
+          <Button disabled={busy || !products.data?.length}>
+            <Send size={15} />
+            Submit event
           </Button>
-        </Card>
-        <Card className="form-card">
-          <h2>Manual transaction</h2>
-          <p>Submit one purchase or sale at a specific unit price.</p>
-          <form
-            onSubmit={manual}
-            onChange={() => setManualId(crypto.randomUUID())}
-          >
-            <div className="form-grid">
-              <label>
-                Movement
-                <select value={kind} onChange={(e) => setKind(e.target.value)}>
-                  <option value="PURCHASE">Purchase</option>
-                  <option value="SALE">Sale</option>
-                </select>
-              </label>
-              <label>
-                Product
-                <select name="product" required>
-                  {products.data?.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Quantity
-                <input
-                  name="quantity"
-                  type="number"
-                  min="1"
-                  max="2147483647"
-                  step="1"
-                  defaultValue="1"
-                  required
-                />
-              </label>
-              <label>
-                Unit price (₹)
-                <input
-                  name="price"
-                  type="text"
-                  inputMode="decimal"
-                  pattern="[0-9]{1,14}([.][0-9]{1,4})?"
-                  placeholder="100.00"
-                  required
-                />
-              </label>
-            </div>
-            <Button disabled={busy || !products.data?.length} variant="outline">
-              <Send size={15} />
-              Submit event
-            </Button>
-          </form>
-        </Card>
-      </div>
+        </form>
+      </Card>
       <Feedback
         loading={products.isLoading}
         error={products.error || receipts.error || ledger.error}
@@ -386,9 +341,7 @@ export function Simulator() {
           </Link>
         </div>
         {!sent.length ? (
-          <Empty>
-            Run a simulation or submit a transaction to see its result.
-          </Empty>
+          <Empty>Submit a transaction to see its result.</Empty>
         ) : (
           <div className="scroll">
             <table>
